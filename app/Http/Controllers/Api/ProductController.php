@@ -119,6 +119,11 @@ class ProductController extends Controller
             'status'    => 'active',
         ]);
 
+        // Notify followers
+        foreach ($user->followers as $follower) {
+            $follower->notify(new \App\Notifications\NewFarmerProductNotification($product, $user));
+        }
+
         return response()->json([
             'message' => 'Product listed successfully.',
             'product' => $product->load('category'),

@@ -85,5 +85,18 @@ class DatabaseSeeder extends Seeder
             'is_active'     => true,
             'expires_at'    => now()->addYear(),
         ]);
+
+        // Badges
+        $badges = [
+            ['name' => 'Top Seller',        'slug' => 'top-seller',        'description' => 'Completed 50+ orders',              'icon' => '🏆', 'type' => 'farmer'],
+            ['name' => 'Organic Certified', 'slug' => 'organic-certified', 'description' => 'Sells verified organic produce',     'icon' => '🌿', 'type' => 'farmer'],
+            ['name' => 'Fast Shipper',      'slug' => 'fast-shipper',      'description' => 'Consistently high ratings (4.5+)',   'icon' => '⚡', 'type' => 'farmer'],
+            ['name' => 'Loyal Buyer',       'slug' => 'loyal-buyer',       'description' => 'Completed 10+ orders',              'icon' => '❤️', 'type' => 'consumer'],
+            ['name' => 'Big Spender',       'slug' => 'big-spender',       'description' => 'Total spend over ₦100,000',         'icon' => '💰', 'type' => 'consumer'],
+        ];
+
+        foreach ($badges as $badge) {
+            \App\Models\Badge::create($badge);
+        }
     }
 }

@@ -200,6 +200,18 @@ class OrderController extends Controller
         $order = $item->order;
         if ($order->items()->where('status', '!=', 'delivered')->doesntExist()) {
             $order->update(['status' => 'delivered', 'delivered_at' => now()]);
+            // Notify consumer
+            $order->consumer->notify(new \App\Notifications\OrderDeliveredNotification($order));
+            // Award badges
+            app(\App\Services\BadgeService::class)->evaluateFarmerBadges($item->farmer);
+            app(\App\Services\BadgeService::class)->evaluateConsumerBadges($order->consumer);
+            // Reward referral if first order
+            $this->rewardReferralIfFirstOrder($order->consumer);
+        }
+
+        // Notify on shipped
+        if ($request->status === 'shipped') {
+            $order->consumer->notify(new \App\Notifications\OrderShippedNotification($order));
         }
 
         return response()->json(['message' => 'Item status updated.', 'item' => $item]);
@@ -229,5 +241,31 @@ class OrderController extends Controller
         ];
 
         return $zones[$state] ?? 3000;
+    }
+
+    private function rewardReferralIfFirstOrder($consumer): void
+    {
+        $orderCount = $consumer->orders()->where('status', 'delivered')->count();
+        if ($orderCount !== 1) return;
+
+        $referral = \App\Models\Referral::where('referred_id', $consumer->id)
+            ->where('status', 'pending')
+            ->first();
+
+        if (!$referral) return;
+
+        $bonus = 500;
+        $referral->update([
+            'status'       => 'rewarded',
+            'bonus_amount' => $bonus,
+            'rewarded_at'  => now(),
+        ]);
+
+        $referrer = $referral->referrer;
+        $wallet   = $referrer->wallet ?? $referrer->wallet()->create(['balance' => 0]);
+        $wallet->credit($bonus, 'referral_bonus', "Referral bonus for inviting {$consumer->name}");
+
+        app(\App\Services\LoyaltyService::class)->awardReferralPoints($referrer, $referral);
+        app(\App\Services\LoyaltyService::class)->awardReferralPoints($consumer, $referral);
     }
 }

@@ -2,17 +2,26 @@
 
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BadgeController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\DeliveryAddressController;
 use App\Http\Controllers\Api\FarmerProfileController;
+use App\Http\Controllers\Api\FollowController;
+use App\Http\Controllers\Api\GdprController;
 use App\Http\Controllers\Api\KycController;
+use App\Http\Controllers\Api\LoginActivityController;
+use App\Http\Controllers\Api\LoyaltyController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\ReferralController;
 use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\SocialAuthController;
+use App\Http\Controllers\Api\WalletController;
 use App\Http\Controllers\Api\WishlistController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,7 +32,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 // ── Public Auth ──────────────────────────────────────────────────────────────
-Route::prefix('auth')->group(function () {
+Route::prefix('auth')->middleware('throttle:auth')->group(function () {
     Route::post('register',        [AuthController::class, 'register']);
     Route::post('login',           [AuthController::class, 'login']);
     Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
@@ -45,6 +54,16 @@ Route::get('products/{product}/reviews',[ReviewController::class, 'index']);
 Route::get('categories',                [CategoryController::class, 'index']);
 Route::get('categories/{category}',     [CategoryController::class, 'show']);
 Route::get('farmers/{userId}/profile',  [FarmerProfileController::class, 'publicProfile']);
+Route::get('farmers/{userId}/badges',   [BadgeController::class, 'farmerBadges']);
+Route::get('farmers/{userId}/followers',[FollowController::class, 'followers']);
+
+// ── Public: Search & Discovery ────────────────────────────────────────────────
+Route::get('search',                    [SearchController::class, 'search']);
+Route::get('products/trending',         [SearchController::class, 'trending']);
+
+// ── Public: Webhooks (no auth) ────────────────────────────────────────────────
+Route::post('payments/paystack/webhook',    [PaymentController::class, 'paystackWebhook']);
+Route::post('payments/flutterwave/webhook', [PaymentController::class, 'flutterwaveWebhook']);
 
 // ── Authenticated Routes ──────────────────────────────────────────────────────
 Route::middleware('auth:sanctum')->group(function () {
@@ -80,6 +99,43 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Coupon validation
     Route::post('coupons/validate',             [CouponController::class, 'validate']);
+
+    // Search & Discovery (auth for personalised results)
+    Route::get('search/recently-viewed',        [SearchController::class, 'recentlyViewed']);
+    Route::get('search/recommended',            [SearchController::class, 'recommended']);
+    Route::post('products/{productId}/view',    [SearchController::class, 'trackView']);
+
+    // Payments
+    Route::post('payments/initialize',          [PaymentController::class, 'initializeOrderPayment']);
+    Route::post('payments/topup',               [PaymentController::class, 'initializeTopup']);
+    Route::post('payments/verify',              [PaymentController::class, 'verifyPayment']);
+
+    // Wallet
+    Route::get('wallet',                        [WalletController::class, 'index']);
+    Route::post('wallet/pay',                   [WalletController::class, 'payWithWallet']);
+
+    // Loyalty Points
+    Route::get('loyalty',                       [LoyaltyController::class, 'index']);
+    Route::post('loyalty/redeem',               [LoyaltyController::class, 'redeem']);
+
+    // Referrals
+    Route::get('referrals',                     [ReferralController::class, 'index']);
+    Route::post('referrals/validate',           [ReferralController::class, 'validate']);
+
+    // Badges
+    Route::get('badges',                        [BadgeController::class, 'index']);
+    Route::get('badges/mine',                   [BadgeController::class, 'myBadges']);
+
+    // Follow farmers
+    Route::post('farmers/{farmerId}/follow',    [FollowController::class, 'toggle']);
+    Route::get('following',                     [FollowController::class, 'following']);
+
+    // Login activity
+    Route::get('login-activity',                [LoginActivityController::class, 'index']);
+
+    // GDPR
+    Route::get('gdpr/export',                   [GdprController::class, 'export']);
+    Route::delete('gdpr/delete-account',        [GdprController::class, 'requestDeletion']);
 
     // ── Consumer Routes ───────────────────────────────────────────────────────
     Route::middleware('role:consumer,farmer,admin')->group(function () {
@@ -143,5 +199,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Transactions
         Route::get('transactions',              [AdminController::class, 'transactions']);
+
+        // Badges admin
+        Route::post('badges',                   [BadgeController::class, 'store']);
+        Route::post('badges/award',             [BadgeController::class, 'award']);
+        Route::post('badges/revoke',            [BadgeController::class, 'revoke']);
+
+        // Wallet admin
+        Route::get('wallets/{userId}',          [WalletController::class, 'adminView']);
+
+        // Login activity admin
+        Route::get('users/{userId}/login-activity', [LoginActivityController::class, 'adminIndex']);
     });
 });

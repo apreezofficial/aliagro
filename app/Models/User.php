@@ -15,7 +15,8 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $fillable = [
         'name', 'email', 'phone', 'avatar', 'role',
         'status', 'google_id', 'google_token', 'password',
-        'email_verified_at',
+        'email_verified_at', 'referral_code',
+        'gdpr_data_requested', 'gdpr_requested_at',
     ];
 
     protected $hidden = [
@@ -79,6 +80,55 @@ class User extends Authenticatable implements MustVerifyEmail
     public function transactions()
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    public function wallet()
+    {
+        return $this->hasOne(Wallet::class);
+    }
+
+    public function loyaltyPoints()
+    {
+        return $this->hasOne(LoyaltyPoint::class);
+    }
+
+    public function referrals()
+    {
+        return $this->hasMany(Referral::class, 'referrer_id');
+    }
+
+    public function referredBy()
+    {
+        return $this->hasOne(Referral::class, 'referred_id');
+    }
+
+    public function badges()
+    {
+        return $this->belongsToMany(Badge::class, 'user_badges')
+            ->withPivot('awarded_at')
+            ->withTimestamps();
+    }
+
+    public function loginActivities()
+    {
+        return $this->hasMany(LoginActivity::class);
+    }
+
+    public function following()
+    {
+        return $this->belongsToMany(User::class, 'farmer_follows', 'follower_id', 'farmer_id')
+            ->withTimestamps();
+    }
+
+    public function followers()
+    {
+        return $this->belongsToMany(User::class, 'farmer_follows', 'farmer_id', 'follower_id')
+            ->withTimestamps();
+    }
+
+    public function recentlyViewed()
+    {
+        return $this->hasMany(ProductView::class)->orderByDesc('last_viewed_at');
     }
 
     // Helpers
