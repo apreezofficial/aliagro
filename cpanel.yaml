@@ -1,0 +1,14 @@
+# AliAgro (vanilla PHP) - cPanel deployment notes
+php:
+  version: "8.3"
+  extensions: [pdo_mysql, mbstring, openssl, fileinfo, curl, gd]
+document_root: public          # or keep the root .htaccess which forwards to public/
+setup_commands:
+  - "cp .env.example .env     # then fill in DB_*, APP_URL, FRONTEND_URL, MAIL_*, gateway keys"
+  - "php bin/key-generate.php"
+  - "php bin/migrate.php"
+  - "php bin/seed.php --reference-only"
+permissions:
+  - { path: storage, mode: "775" }
+  - { path: public/storage, mode: "775" }
+cron_jobs: []                  # none needed: no scheduler, no queue worker

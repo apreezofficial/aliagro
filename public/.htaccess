@@ -1,0 +1,21 @@
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # Pass the Authorization header to PHP (needed for bearer tokens on CGI/FastCGI)
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Real files (uploads under /storage, etc.) are served directly
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Never execute scripts that end up in the upload folder
+<IfModule mod_rewrite.c>
+    RewriteRule ^storage/.*\.(php|phtml|phar)$ - [F,L,NC]
+</IfModule>

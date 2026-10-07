@@ -1,0 +1,10 @@
+# Use this only if your host cannot point the document root at /public.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Never expose source, config, env, SQL or logs
+    RewriteRule ^(\.env|\.git|bootstrap|bin|config|database|routes|src|storage|tests)(/|$) - [F,L]
+
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
