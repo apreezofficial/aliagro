@@ -7,6 +7,12 @@ final class Config
 {
     private static array $loaded = [];
 
+    /** Forget cached config files (used after the installer changes the environment). */
+    public static function flush(): void
+    {
+        self::$loaded = [];
+    }
+
     public static function get(string $key, mixed $default = null): mixed
     {
         $segments = explode('.', $key);

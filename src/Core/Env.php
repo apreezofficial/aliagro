@@ -32,8 +32,10 @@ final class Env
             $key   = trim(substr($line, 0, $pos));
             $value = trim(substr($line, $pos + 1));
 
+            $literal = false;
             if ($value !== '' && ($value[0] === '"' || $value[0] === "'")) {
-                $quote = $value[0];
+                $quote   = $value[0];
+                $literal = $quote === "'";   // single quotes: no escapes, no ${VAR} interpolation
                 $end   = strrpos($value, $quote);
                 $value = $end > 0 ? substr($value, 1, $end - 1) : substr($value, 1);
                 if ($quote === '"') {
@@ -48,7 +50,7 @@ final class Env
             }
 
             // ${OTHER_VAR} interpolation
-            $value = preg_replace_callback('/\$\{([A-Z0-9_]+)\}/i', function ($m) {
+            if (!$literal) $value = preg_replace_callback('/\$\{([A-Z0-9_]+)\}/i', function ($m) {
                 $v = self::raw($m[1]);
                 return $v === null ? '' : (string) $v;
             }, $value);

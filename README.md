@@ -9,6 +9,16 @@ Same routes, same JSON shapes, same database tables, and tokens already issued b
 PHP 8.3+ with `pdo_mysql`, `curl`, `mbstring`, `fileinfo`, `openssl`; MySQL 5.7+ / MariaDB 10.3+.
 
 ## Setup
+### Easiest: the web installer
+Deploy the files, point the domain at `public/`, and open **`/setup`** (visiting `/` in a browser redirects there on a fresh install).
+Enter the MySQL host/port/database/user/password, your site URLs and the first admin account. It then connects to MySQL
+(optionally creating the database), builds the schema, seeds categories/badges/a sample coupon, creates your admin,
+writes `.env` (with a fresh `APP_KEY`) and **locks itself** by creating `storage/installed.lock`, after which `/setup` returns 403.
+It needs write access to the project folder (for `.env`) and `storage/`. Optionally set `SETUP_KEY=something` in the server
+environment first and the form will demand it, so nobody else can claim a freshly deployed site. If an install is interrupted
+just submit again; every step is idempotent.
+
+### Or from the command line
 ```bash
 cp .env.example .env          # then edit DB_*, APP_URL, FRONTEND_URL, mail, gateway keys
 php bin/key-generate.php      # writes APP_KEY (used to sign email-verification links)

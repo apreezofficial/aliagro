@@ -105,7 +105,7 @@ final class Request
     /** Trim strings and convert '' to null (Laravel's default middleware). */
     private static function normalize(array $data): array
     {
-        $skipTrim = ['password', 'password_confirmation', 'current_password'];
+        $skipTrim = ['password', 'password_confirmation', 'current_password', 'db_password', 'admin_password', 'admin_password_confirmation'];
         foreach ($data as $key => $value) {
             if (is_array($value)) {
                 $data[$key] = self::normalize($value);

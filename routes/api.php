@@ -34,6 +34,10 @@ use App\Controllers\WishlistController;
 
 /** @var App\Core\Router $router */
 
+// First-time installer (locks itself after use)
+$router->get('setup',  [App\Controllers\SetupController::class, 'show']);
+$router->post('setup', [App\Controllers\SetupController::class, 'install']);
+
 // Health check / landing
 $router->get('/', [App\Controllers\HealthController::class, 'index']);
 $router->get('/up', [App\Controllers\HealthController::class, 'index']);

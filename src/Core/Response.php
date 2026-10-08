@@ -15,6 +15,11 @@ final class Response
         return new self($data, $status, $headers);
     }
 
+    public static function html(string $html, int $status = 200): self
+    {
+        return new self($html, $status, ['Content-Type' => 'text/html; charset=utf-8']);
+    }
+
     public static function redirect(string $url, int $status = 302): self
     {
         return new self(null, $status, ['Location' => $url]);
@@ -36,6 +41,10 @@ final class Response
         }
 
         if ($this->data !== null && $this->status !== 204) {
+            if (is_string($this->data) && str_starts_with($this->headers['Content-Type'] ?? '', 'text/html')) {
+                echo $this->data;
+                return;
+            }
             if (!isset($this->headers['Content-Type'])) {
                 header('Content-Type: application/json');
             }
